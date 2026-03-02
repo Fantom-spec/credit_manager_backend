@@ -54,7 +54,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS redeemed (
             id SERIAL PRIMARY KEY,
             credits_used FLOAT NOT NULL,
-            time_used VARCHAR NOT NULL
+            time_used VARCHAR NOT NULL,
             date DATE NOT NULL
         );
     """)
