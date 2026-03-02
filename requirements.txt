@@ -1,0 +1,5 @@
+Flask
+gunicorn
+qrcode
+psycopg2-binary
+flask-cors
