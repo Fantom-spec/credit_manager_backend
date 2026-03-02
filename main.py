@@ -38,9 +38,10 @@ def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # SOLD TABLE (no id)
+    # SOLD TABLE
     cur.execute("""
         CREATE TABLE IF NOT EXISTS sold (
+            id SERIAL PRIMARY KEY,
             credits_sold FLOAT NOT NULL,
             discount_percent FLOAT NOT NULL,
             final_price FLOAT NOT NULL,
@@ -48,9 +49,10 @@ def init_db():
         );
     """)
 
-    # REDEEMED TABLE (no id)
+    # REDEEMED TABLE
     cur.execute("""
         CREATE TABLE IF NOT EXISTS redeemed (
+            id SERIAL PRIMARY KEY,
             credits_used FLOAT NOT NULL,
             date DATE NOT NULL,
             time TIME NOT NULL
@@ -74,10 +76,6 @@ def health_check():
     return jsonify({"status": "API running"})
 
 
-# --------------------------
-# CALCULATE
-# --------------------------
-
 @app.route("/calculate", methods=["POST"])
 def calculate():
     data = request.get_json()
@@ -94,14 +92,8 @@ def calculate():
     discount_amt = (discount * credits) / 100
     final_amount = credits - discount_amt
 
-    return jsonify({
-        "final_amount": round(final_amount, 2)
-    })
+    return jsonify({"final_amount": round(final_amount, 2)})
 
-
-# --------------------------
-# SELL
-# --------------------------
 
 @app.route("/sell", methods=["POST"])
 def sell():
@@ -123,18 +115,17 @@ def sell():
     cur.execute("""
         INSERT INTO sold (credits_sold, discount_percent, final_price)
         VALUES (%s, %s, %s)
+        RETURNING id
     """, (credits, discount, final_amount))
+
+    new_id = cur.fetchone()[0]
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return jsonify({"status": "success"})
+    return jsonify({"status": "success", "id": new_id})
 
-
-# --------------------------
-# REDEEM
-# --------------------------
 
 @app.route("/redeem", methods=["POST"])
 def redeem():
@@ -156,18 +147,17 @@ def redeem():
     cur.execute("""
         INSERT INTO redeemed (credits_used, date, time)
         VALUES (%s, %s, %s)
+        RETURNING id
     """, (credits_used, now.date(), now.time()))
+
+    new_id = cur.fetchone()[0]
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return jsonify({"status": "success"})
+    return jsonify({"status": "success", "id": new_id})
 
-
-# --------------------------
-# GENERATE QR
-# --------------------------
 
 @app.route("/generate_qr", methods=["POST"])
 def generate_qr():
@@ -190,9 +180,7 @@ def generate_qr():
 
     img_str = base64.b64encode(buffer.getvalue()).decode()
 
-    return jsonify({
-        "qr_image": img_str
-    })
+    return jsonify({"qr_image": img_str})
 
 
 # ==========================
