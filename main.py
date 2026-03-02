@@ -181,7 +181,7 @@ def generate_qr():
     if amount <= 0:
         return jsonify({"error": "Invalid amount"}), 400
 
-    link = f"upi://pay?pa={UPI_ID}&pn=CreditsManager&am={amount}&cu=INR"
+    link = f"upi://pay?pa={UPI_ID}&am={amount}"
 
     qr = qrcode.make(link)
 
