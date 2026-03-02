@@ -54,8 +54,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS redeemed (
             id SERIAL PRIMARY KEY,
             credits_used FLOAT NOT NULL,
-            date DATE NOT NULL,
-            time TIME NOT NULL
+            time_used VARCHAR NOT NULL
+            date DATE NOT NULL
         );
     """)
 
@@ -133,6 +133,8 @@ def redeem():
 
     try:
         credits_used = float(data.get("credits_used", 0))
+        time_used=data.get("meal_time")
+        date_used=data.get("date_used")
     except:
         return jsonify({"error": "Invalid input"}), 400
 
@@ -145,10 +147,10 @@ def redeem():
     cur = conn.cursor()
 
     cur.execute("""
-        INSERT INTO redeemed (credits_used, date, time)
+        INSERT INTO redeemed (credits_used, time_used, date)
         VALUES (%s, %s, %s)
         RETURNING id
-    """, (credits_used, now.date(), now.time()))
+    """, (credits_used, time_used, date_used))
 
     new_id = cur.fetchone()[0]
 
