@@ -150,7 +150,7 @@ def redeem():
         INSERT INTO redeemed (credits_used, time_used, date)
         VALUES (%s, %s, %s)
         RETURNING id
-    """, (credits_used, time_used, date_used))
+    """, (credits_used, time_used, now.date()))
 
     new_id = cur.fetchone()[0]
 
