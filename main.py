@@ -191,39 +191,40 @@ def generate_qr():
 
 
 
-@app.route("/report", methods=["POST"])
-def redeem():
-    data = request.get_json()
-
-    try:
-        button=data.get("button")
-    except:
-        return jsonify({"error": "Error"}), 400
-
-    if button!="report_needed":
-        return jsonify({"error": "Error"}), 400
+@app.route("/report", methods=["GET"])
+def report():
 
     conn = get_db_connection()
     cur = conn.cursor()
 
     now = datetime.now()
-
     days_in_month = calendar.monthrange(now.year, now.month)[1]
 
-    cur.execute("""SELECT
+    cur.execute("""
+        SELECT
         (SELECT SUM(credits_sold) FROM sold),
         (SELECT SUM(credits_used) FROM redeemed)
-        """)
+    """)
 
     sold_total, used_total = cur.fetchone()
 
-    total_credits=days_in_month*250
-    left_credits=total_credits-(used_total+sold_total)
-    conn.commit()
+    sold_total = sold_total or 0
+    used_total = used_total or 0
+
+    total_credits = days_in_month * 250
+    left_credits = total_credits - (used_total + sold_total)
+
+    progress = round(((used_total + sold_total) / total_credits) * 100)
+
     cur.close()
     conn.close()
 
-    return jsonify({"used": used_total, "sold": sold_total,"left":left_credits,"progress":round((left_credits/total_credits)*100) })
+    return jsonify({
+        "used": used_total,
+        "sold": sold_total,
+        "left": left_credits,
+        "progress": progress
+    })
 
 
 
