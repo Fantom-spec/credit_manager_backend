@@ -2,6 +2,8 @@ import os
 import base64
 from io import BytesIO
 from datetime import datetime
+import calendar
+
 
 import psycopg2
 import qrcode
@@ -126,6 +128,9 @@ def sell():
 
     return jsonify({"status": "success", "id": new_id})
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok'}), 200
 
 @app.route("/redeem", methods=["POST"])
 def redeem():
@@ -183,6 +188,43 @@ def generate_qr():
     img_str = base64.b64encode(buffer.getvalue()).decode()
 
     return jsonify({"qr_image": img_str})
+
+
+
+@app.route("/report", methods=["POST"])
+def redeem():
+    data = request.get_json()
+
+    try:
+        button=data.get("button")
+    except:
+        return jsonify({"error": "Error"}), 400
+
+    if button!="report_needed":
+        return jsonify({"error": "Error"}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    now = datetime.now()
+
+    days_in_month = calendar.monthrange(now.year, now.month)[1]
+
+    cur.execute("""SELECT
+        (SELECT SUM(credits_sold) FROM sold),
+        (SELECT SUM(credits_used) FROM redeemed)
+        """)
+
+    sold_total, used_total = cur.fetchone()
+
+    total_credits=days_in_month*250
+    left_credits=total_credits-(used_total+sold_total)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"used": used_total, "sold": sold_total,"left":left_credits,"progress":round((left_credits/total_credits)*100) })
+
 
 
 # ==========================
