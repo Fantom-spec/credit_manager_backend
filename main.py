@@ -94,7 +94,7 @@ def calculate():
     discount_amt = (discount * credits) / 100
     final_amount = credits - discount_amt
 
-    return jsonify({"final_amount": round(final_amount, 2)})
+    return jsonify({"final_amount": round(final_amount)})
 
 
 @app.route("/sell", methods=["POST"])
